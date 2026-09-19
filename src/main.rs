@@ -139,7 +139,7 @@ fn generate_tree<R: io::Read>(reader: &mut R) -> io::Result<HuffmanNode> {
             break;
         }
 
-        for b in buffer {
+        for b in &buffer[..n] {
             let count = freq.entry(b.clone()).or_insert(0);
             *count += 1
         }
