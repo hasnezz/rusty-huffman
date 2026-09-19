@@ -447,3 +447,43 @@ fn main() {
         compress(&mut reader, &mut writer).unwrap();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    const DATA: &[u8] = &[
+        191, 99, 191, 162, 126, 63, 178, 70, 51, 2, 116, 191, 191, 191, 225, 184, 53, 36, 111, 89,
+        191, 54, 191, 191, 187, 55, 33, 210, 98, 53, 25, 138, 23, 141, 221, 9, 132, 85, 79, 68, 94,
+        191, 113, 135, 5, 191, 221, 191, 191, 191, 195, 76, 191, 83, 201, 1, 141, 151, 226, 137,
+        92, 191, 30, 95, 191, 82, 191, 32, 59, 47, 235, 191, 74, 191, 88, 16, 0, 82, 160, 221, 194,
+        143, 56, 72, 205, 85, 31, 191, 166, 78, 62, 110, 191, 158, 238, 91, 46, 160, 25, 111,
+    ];
+
+    fn roundtrip(data: &[u8]) {
+        // pass data slice directly using Cursor (position starts at 0)
+        let mut source = Cursor::new(data);
+        let mut compressed = Cursor::new(Vec::new());
+
+        compress(&mut source, &mut compressed).expect("Compression failed");
+
+        // rewind compressed stream for reading
+        compressed.set_position(0);
+        let mut decompressed = Cursor::new(Vec::new());
+
+        decompress(&mut compressed, &mut decompressed).expect("Decompression failed");
+
+        assert_eq!(data, decompressed.get_ref().as_slice());
+    }
+
+    #[test]
+    fn full_roundtrip_test() {
+        roundtrip(&DATA);
+    }
+
+    #[test]
+    fn roundtrip_with_single_byte_test() {
+        roundtrip(&DATA[..1]);
+    }
+}
